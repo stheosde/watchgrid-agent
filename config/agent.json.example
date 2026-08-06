@@ -1,0 +1,5 @@
+{
+    "agent_id": "your-agent-uuid-here",
+    "token": "your-api-token-here",
+    "base_url": "https://wgri.de/api"
+}

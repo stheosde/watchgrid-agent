@@ -1,0 +1,19 @@
+{
+    "agent": {
+        "id": "abbb564f-f876-468e-ad24-96be972aba9e",
+        "version": "0.4.0"
+    },
+    "usage": {
+        "cpu_percent": 62.45,
+        "ram_percent": 14.11,
+        "disk_percent": 25.03
+    },
+    "timestamp": "2026-01-21 19:04:01 +0100",
+    "ports": {
+        "error": false
+    },
+    "services": {
+        "error": true,
+        "affected": ["docker.service", "nginx.service"]
+    }
+}

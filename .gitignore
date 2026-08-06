@@ -1,0 +1,6 @@
+.DS_Store
+.idea
+./dist
+./agent
+watchgrid
+config/*.json

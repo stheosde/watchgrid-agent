@@ -1,0 +1,170 @@
+name: Release latest version of WatchGrid Agent
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_SECRET_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ENDPOINT_URL: ${{ secrets.AWS_ENDPOINT_URL }}
+      S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+    
+    strategy:
+      matrix:
+        goos: [linux]
+        goarch: [amd64, arm64]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.0'
+
+      - name: Get Version from Tag
+        id: get_version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${TAG_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Build Binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          mkdir -p dist
+          BINARY_NAME="watchgrid-${GOOS}-${GOARCH}-${VERSION}"
+
+          # Build Binary with version ldflags
+          go build -ldflags="-X main.Version=${VERSION} -s -w" -o "dist/${BINARY_NAME}" .
+
+          # Generate Checksum
+          cd dist
+          sha256sum "${BINARY_NAME}" > "${BINARY_NAME}.sha256"
+
+      - name: Configure AWS CLI
+        run: |
+          mkdir -p ~/.aws
+          echo "[default]
+          endpoint_url = $AWS_ENDPOINT_URL" > ~/.aws/config
+          echo "[default]
+          aws_access_key_id = $AWS_ACCESS_KEY_ID
+          aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+
+      - name: Upload Binaries to S3
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          BINARY_NAME="watchgrid-${GOOS}-${GOARCH}-${VERSION}"
+
+          # Upload Versioned Binary and Checksum
+          aws s3 cp "dist/${BINARY_NAME}" \
+            "s3://${S3_BUCKET}/packages/${GOOS}/${GOARCH}/${VERSION}/watchgrid" \
+            --content-type "application/octet-stream"
+          aws s3 cp "dist/${BINARY_NAME}.sha256" \
+            "s3://${S3_BUCKET}/packages/${GOOS}/${GOARCH}/${VERSION}/watchgrid.sha256" \
+            --content-type "text/plain"
+
+          # Upload Latest Binary and Checksum for this platform
+          aws s3 cp "dist/${BINARY_NAME}" \
+            "s3://${S3_BUCKET}/packages/${GOOS}/${GOARCH}/watchgrid" \
+            --content-type "application/octet-stream"
+          aws s3 cp "dist/${BINARY_NAME}.sha256" \
+            "s3://${S3_BUCKET}/packages/${GOOS}/${GOARCH}/watchgrid.sha256" \
+            --content-type "text/plain"
+
+      - name: Upload Artifact for Release Job
+        uses: actions/upload-artifact@v4
+        with:
+          name: watchgrid-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/*
+          retention-days: 1
+
+  create-github-release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get Version from Tag
+        id: get_version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "tag=${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${TAG_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Structure Release Assets
+        run: |
+          mkdir -p release-dist
+          find artifacts -type f -exec cp {} release-dist/ \;
+          ls -la release-dist/
+
+      - name: Create GitHub Release and Upload Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.tag }}
+          name: Release ${{ steps.get_version.outputs.tag }}
+          files: release-dist/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-changelog-s3:
+    needs: create-github-release
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_SECRET_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_ENDPOINT_URL: ${{ secrets.AWS_ENDPOINT_URL }}
+      S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get Version from Tag
+        id: get_version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "version=${TAG_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS CLI
+        run: |
+          mkdir -p ~/.aws
+          echo "[default]
+          endpoint_url = $AWS_ENDPOINT_URL" > ~/.aws/config
+          echo "[default]
+          aws_access_key_id = $AWS_ACCESS_KEY_ID
+          aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" > ~/.aws/credentials
+
+      - name: Upload Release Info to S3
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          aws s3 cp "CHANGELOG.md" \
+            "s3://${S3_BUCKET}/packages/changelog/CHANGELOG.md" \
+            --content-type "text/plain"
+
+          echo "${VERSION}" > VERSION.txt
+          aws s3 cp "VERSION.txt" \
+            "s3://${S3_BUCKET}/packages/changelog/VERSION.txt" \
+            --content-type "text/plain"
