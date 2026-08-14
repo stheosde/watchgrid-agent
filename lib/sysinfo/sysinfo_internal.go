@@ -28,11 +28,9 @@ func Architecture() string {
 }
 
 func KernelVersion() string {
-	if release, err := os.ReadFile("/proc/sys/kernel/osrelease"); err == nil {
-		return strings.TrimSpace(string(release))
-	}
-	if release, err := syscall.Sysctl("kern.osrelease"); err == nil {
-		return release
+	version := kernelVersion()
+	if version != "Unknown" {
+		return version
 	}
 	if kernelInfo, err := exec.Command("uname", "-r").Output(); err == nil {
 		return strings.TrimSpace(string(kernelInfo))
