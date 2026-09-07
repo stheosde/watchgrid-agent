@@ -12,7 +12,9 @@ import (
 
 	"watchgrid.de/agent/lib/agent"
 	"watchgrid.de/agent/lib/config"
+	"watchgrid.de/agent/lib/docker"
 	"watchgrid.de/agent/lib/ports"
+	"watchgrid.de/agent/lib/services"
 )
 
 const (
@@ -43,7 +45,7 @@ func Collect() (*MetricSnapshot, error) {
 
 	var serviceStatus ServiceStatus
 	if len(cfg.Services) > 0 {
-		stoppedServices := ports.CheckStoppedServices(cfg.Services)
+		stoppedServices := services.CheckStoppedServices(cfg.Services)
 		serviceStatus = ServiceStatus{
 			Error:    len(stoppedServices) > 0,
 			Affected: stoppedServices,
@@ -55,9 +57,9 @@ func Collect() (*MetricSnapshot, error) {
 	}
 
 	var dockerStatus DockerStatus
-	detectedContainers := ports.RunningDockerContainers()
+	detectedContainers := docker.RunningDockerContainers()
 	if len(cfg.DockerContainers) > 0 {
-		stoppedContainers := ports.CheckStoppedDockerContainers(cfg.DockerContainers)
+		stoppedContainers := docker.CheckStoppedDockerContainers(cfg.DockerContainers)
 		dockerStatus = DockerStatus{
 			Error:    len(stoppedContainers) > 0,
 			Affected: stoppedContainers,

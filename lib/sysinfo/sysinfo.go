@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"watchgrid.de/agent/lib/agent"
-	"watchgrid.de/agent/lib/ports"
+	"watchgrid.de/agent/lib/docker"
 )
 
 const (
@@ -34,7 +34,7 @@ func Collect() (*SystemInformation, error) {
 		CPUCores:                 CPUCores(),
 		RAMGB:                    TotalRAMGB(),
 		DiskGB:                   TotalDiskGB(),
-		DetectedDockerContainers: ports.RunningDockerContainers(),
+		DetectedDockerContainers: docker.RunningDockerContainers(),
 	}
 	return sysInfo, nil
 }

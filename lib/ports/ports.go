@@ -3,7 +3,6 @@ package ports
 import (
 	"bufio"
 	"os"
-	"os/exec"
 	"slices"
 	"strconv"
 	"strings"
@@ -26,28 +25,6 @@ func CheckNonWhitelistedPorts(allowedPorts []int) ([]int, error) {
 		}
 	}
 	return nonWhitelisted, nil
-}
-
-func CheckStoppedServices(servicesToCheck []string) []string {
-	var stopped []string
-	for _, service := range servicesToCheck {
-		if !ServiceIsRunning(service) {
-			stopped = append(stopped, service)
-		}
-	}
-	return stopped
-}
-
-var checkServiceRunning = func(service string) bool {
-	if _, err := exec.LookPath("systemctl"); err == nil {
-		cmd := exec.Command("systemctl", "is-active", "--quiet", service)
-		return cmd.Run() == nil
-	}
-	return true
-}
-
-func ServiceIsRunning(service string) bool {
-	return checkServiceRunning(service)
 }
 
 func OpenPorts() ([]int, error) {

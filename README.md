@@ -13,6 +13,7 @@ A lightweight background daemon written in Go that monitors system health and re
 - **System Metrics**: Collects CPU, memory, uptime, and disk usage natively (reading procfs and kernel statistics directly instead of spawning external shell tools).
 - **Port Checking**: Inspects active network sockets to detect if non-whitelisted ports are open.
 - **Service Monitoring**: Verifies the status of configured system services using systemd.
+- **Docker Container Monitoring**: Inspects configured Docker containers and auto-detects running containers.
 - **Auto-Updates**: Safely downloads newer versions of the agent, verifies the download checksum, and updates the executable.
 - **Single Instance Lock**: Ensures only one instance of the agent daemon runs on a host.
 

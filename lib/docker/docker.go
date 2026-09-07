@@ -1,11 +1,11 @@
-package ports
+package docker
 
 import (
 	"os/exec"
 	"strings"
 )
 
-var checkContainerRunning = func(container string) bool {
+var CheckContainerRunning = func(container string) bool {
 	if _, err := exec.LookPath("docker"); err == nil {
 		cmd := exec.Command("docker", "inspect", "--format", "{{.State.Running}}", container)
 		out, err := cmd.Output()
@@ -18,7 +18,7 @@ var checkContainerRunning = func(container string) bool {
 }
 
 func ContainerIsRunning(container string) bool {
-	return checkContainerRunning(container)
+	return CheckContainerRunning(container)
 }
 
 func CheckStoppedDockerContainers(containersToCheck []string) []string {
@@ -31,7 +31,7 @@ func CheckStoppedDockerContainers(containersToCheck []string) []string {
 	return stopped
 }
 
-var listRunningContainers = func() ([]string, error) {
+var ListRunningContainers = func() ([]string, error) {
 	if _, err := exec.LookPath("docker"); err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ var listRunningContainers = func() ([]string, error) {
 }
 
 func RunningDockerContainers() []string {
-	containers, err := listRunningContainers()
+	containers, err := ListRunningContainers()
 	if err != nil {
 		return []string{}
 	}

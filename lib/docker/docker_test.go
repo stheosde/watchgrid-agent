@@ -1,4 +1,4 @@
-package ports
+package docker
 
 import (
 	"errors"
@@ -7,14 +7,14 @@ import (
 )
 
 func TestContainerIsRunningAndCheckStoppedDockerContainers(t *testing.T) {
-	oldCheck := checkContainerRunning
-	checkContainerRunning = func(container string) bool {
+	oldCheck := CheckContainerRunning
+	CheckContainerRunning = func(container string) bool {
 		if container == "stopped-app" {
 			return false
 		}
 		return true
 	}
-	defer func() { checkContainerRunning = oldCheck }()
+	defer func() { CheckContainerRunning = oldCheck }()
 
 	if ContainerIsRunning("stopped-app") {
 		t.Error("expected stopped-app ContainerIsRunning to return false")
@@ -35,11 +35,11 @@ func TestContainerIsRunningAndCheckStoppedDockerContainers(t *testing.T) {
 }
 
 func TestRunningDockerContainers(t *testing.T) {
-	oldList := listRunningContainers
-	defer func() { listRunningContainers = oldList }()
+	oldList := ListRunningContainers
+	defer func() { ListRunningContainers = oldList }()
 
 	// Success case
-	listRunningContainers = func() ([]string, error) {
+	ListRunningContainers = func() ([]string, error) {
 		return []string{"web", "db", "redis"}, nil
 	}
 
@@ -50,7 +50,7 @@ func TestRunningDockerContainers(t *testing.T) {
 	}
 
 	// Error case
-	listRunningContainers = func() ([]string, error) {
+	ListRunningContainers = func() ([]string, error) {
 		return nil, errors.New("docker daemon not running")
 	}
 
