@@ -274,3 +274,70 @@ func TestPrint_NoPortsOrServices(t *testing.T) {
 		t.Errorf("expected %q, got %q", expected, output)
 	}
 }
+
+func TestCollect_DockerContainers(t *testing.T) {
+	oldConfig := config.Config
+	defer func() { config.Config = oldConfig }()
+
+	config.Config = config.ConfigFile{
+		DockerContainers: []string{"web-app"},
+	}
+
+	snapshot, err := Collect()
+	if err != nil {
+		t.Fatalf("Collect failed: %v", err)
+	}
+
+	// In test environment without mock or without container, web-app is stopped
+	if len(snapshot.DockerContainers.Affected) != 1 || snapshot.DockerContainers.Affected[0] != "web-app" {
+		t.Errorf("expected affected ['web-app'], got %v", snapshot.DockerContainers.Affected)
+	}
+	if !snapshot.DockerContainers.Error {
+		t.Error("expected DockerContainers.Error to be true for stopped container")
+	}
+}
+
+func TestPrint_WithDockerContainers(t *testing.T) {
+	oldConfig := config.Config
+	defer func() { config.Config = oldConfig }()
+
+	config.Config = config.ConfigFile{
+		Ports:            []int{80},
+		Services:         []string{"nginx"},
+		DockerContainers: []string{"web-app"},
+	}
+
+	snapshot := &MetricSnapshot{
+		Agent: agent.AgentConfig{
+			ID:      "test-agent",
+			Version: "1.0.0",
+		},
+		Usage: Usages{
+			CPUPercent:    10.0,
+			MemoryPercent: 20.0,
+			DiskPercent:   30.0,
+		},
+		Ports:            PortStatus{Error: false},
+		Services:         ServiceStatus{Error: false},
+		DockerContainers: DockerStatus{Error: false},
+		Timestamp:        "2026-09-07 10:00:00 +0200",
+	}
+
+	r, w, _ := os.Pipe()
+	old := os.Stdout
+	os.Stdout = w
+
+	Print(snapshot)
+
+	w.Close()
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+
+	expected := "agent{id:test-agent version:1.0.0} usage{cpu:10.00% memory:20.00% disk:30.00%} ports:ok services:ok docker_containers:ok timestamp:2026-09-07 10:00:00 +0200\n"
+	if output != expected {
+		t.Errorf("expected %q, got %q", expected, output)
+	}
+}

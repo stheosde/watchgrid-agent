@@ -4,10 +4,18 @@ Hier können alle clientseitigen Änderungen von WatchGrid nachgelesen werden.<b
 Unsere Releases orientieren sich an der [semantischen Versionierung](https://semver.org/spec/v2.0.0.html).<br><br>
 Das Changelog für Server und Client basiert auf dem System [keepachangelog](https://keepachangelog.com/de/)
 
-## [1.5.1-1.5.2] - 2026-08-14
+## [1.6.0] - 2026-09-07
+
+### Added
+- Neuer Überwachungsmechanismus für Docker-Container inkl. automatischer Erkennung laufender Container
+- Überprüfung des Container-Status und Übermittlung an das Dashboard
+
+
+## [1.5.1-1.5.3] - 2026-08-14
 
 ### Fixed
 - Beheben von Problematiken in der automatischen Buildpipeline
+
 
 ## [1.5.0] - 2026-08-07
 

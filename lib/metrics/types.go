@@ -15,12 +15,19 @@ type ServiceStatus struct {
 	Affected []string `json:"affected,omitempty"`
 }
 
+type DockerStatus struct {
+	Error    bool     `json:"error"`
+	Affected []string `json:"affected,omitempty"`
+	Detected []string `json:"detected,omitempty"`
+}
+
 type MetricSnapshot struct {
-	Agent     agent.AgentConfig `json:"agent"`
-	Usage     Usages            `json:"usage"`
-	Timestamp string            `json:"timestamp"`
-	Ports     PortStatus        `json:"ports"`
-	Services  ServiceStatus     `json:"services"`
+	Agent            agent.AgentConfig `json:"agent"`
+	Usage            Usages            `json:"usage"`
+	Timestamp        string            `json:"timestamp"`
+	Ports            PortStatus        `json:"ports"`
+	Services         ServiceStatus     `json:"services"`
+	DockerContainers DockerStatus      `json:"docker_containers"`
 }
 
 type Usages struct {

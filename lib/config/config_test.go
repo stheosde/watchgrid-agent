@@ -40,8 +40,9 @@ func TestReadConfigJSON(t *testing.T) {
 	defer os.Remove(tmpFile.Name())
 
 	expectedConfig := ConfigFile{
-		Ports:    []int{80, 443, 8080},
-		Services: []string{"nginx", "postgresql"},
+		Ports:            []int{80, 443, 8080},
+		Services:         []string{"nginx", "postgresql"},
+		DockerContainers: []string{"redis", "postgres"},
 	}
 	bytes, err := json.Marshal(expectedConfig)
 	if err != nil {
@@ -59,6 +60,9 @@ func TestReadConfigJSON(t *testing.T) {
 	}
 	if len(cfg.Services) != 2 || cfg.Services[0] != "nginx" || cfg.Services[1] != "postgresql" {
 		t.Errorf("expected Services ['nginx', 'postgresql'], got %v", cfg.Services)
+	}
+	if len(cfg.DockerContainers) != 2 || cfg.DockerContainers[0] != "redis" || cfg.DockerContainers[1] != "postgres" {
+		t.Errorf("expected DockerContainers ['redis', 'postgres'], got %v", cfg.DockerContainers)
 	}
 }
 
@@ -88,6 +92,7 @@ func TestPullFromServer(t *testing.T) {
 			"cpu_percent_alert": 90.0,
 			"ports": "80, 443, 8080",
 			"services": "nginx, postgresql",
+			"docker_containers": "redis, postgres",
 			"allowed_uptime_days": 120
 		}`))
 	}))
@@ -123,6 +128,9 @@ func TestPullFromServer(t *testing.T) {
 	}
 	if len(Config.Services) != 2 || Config.Services[0] != "nginx" || Config.Services[1] != "postgresql" {
 		t.Errorf("expected Services ['nginx', 'postgresql'], got %v", Config.Services)
+	}
+	if len(Config.DockerContainers) != 2 || Config.DockerContainers[0] != "redis" || Config.DockerContainers[1] != "postgres" {
+		t.Errorf("expected DockerContainers ['redis', 'postgres'], got %v", Config.DockerContainers)
 	}
 	if Config.AllowedUptimeDays != 120 {
 		t.Errorf("expected AllowedUptimeDays 120, got %d", Config.AllowedUptimeDays)

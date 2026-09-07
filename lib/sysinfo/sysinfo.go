@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"watchgrid.de/agent/lib/agent"
+	"watchgrid.de/agent/lib/ports"
 )
 
 const (
@@ -24,15 +25,16 @@ var (
 func Collect() (*SystemInformation, error) {
 	agentInfo := agent.Info()
 	sysInfo := &SystemInformation{
-		Agent:           *agentInfo,
-		Hostname:        Hostname(),
-		OperatingSystem: OperatingSystem(),
-		Architecture:    Architecture(),
-		KernelVersion:   KernelVersion(),
-		UptimeSeconds:   UptimeSeconds(),
-		CPUCores:        CPUCores(),
-		RAMGB:           TotalRAMGB(),
-		DiskGB:          TotalDiskGB(),
+		Agent:                    *agentInfo,
+		Hostname:                 Hostname(),
+		OperatingSystem:          OperatingSystem(),
+		Architecture:             Architecture(),
+		KernelVersion:            KernelVersion(),
+		UptimeSeconds:            UptimeSeconds(),
+		CPUCores:                 CPUCores(),
+		RAMGB:                    TotalRAMGB(),
+		DiskGB:                   TotalDiskGB(),
+		DetectedDockerContainers: ports.RunningDockerContainers(),
 	}
 	return sysInfo, nil
 }

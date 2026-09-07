@@ -1,6 +1,7 @@
 {
     "ports": [22, 80, 443, 9100],
     "services": ["nginx", "docker", "ssh"],
+    "docker_containers": ["database", "redis", "web"],
     "allowed_uptime_days": 120,
     "reporting_interval_seconds": 60
 }

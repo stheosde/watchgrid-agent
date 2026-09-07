@@ -95,8 +95,22 @@ func PullFromServer() (bool, error) {
 		}
 	}
 
+	// Parse docker containers (comma-separated string)
+	var dockerContainers []string
+	if apiConfig.DockerContainers != "" {
+		parts := strings.Split(apiConfig.DockerContainers, ",")
+		for _, part := range parts {
+			part = strings.TrimSpace(part)
+			if part == "" {
+				continue
+			}
+			dockerContainers = append(dockerContainers, part)
+		}
+	}
+
 	Config.Ports = ports
 	Config.Services = services
+	Config.DockerContainers = dockerContainers
 	Config.AllowedUptimeDays = apiConfig.AllowedUptimeDays
 	Config.ReportingIntervalSeconds = apiConfig.ReportingIntervalSeconds
 

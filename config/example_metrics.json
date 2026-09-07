@@ -15,5 +15,9 @@
     "services": {
         "error": true,
         "affected": ["docker.service", "nginx.service"]
+    },
+    "docker_containers": {
+        "error": false,
+        "detected": ["database", "redis", "web"]
     }
 }

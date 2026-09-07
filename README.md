@@ -63,6 +63,7 @@ Automatically pulled and synchronized from the WatchGrid server. It controls wha
 {
   "ports": [22, 80, 443, 9100],
   "services": ["nginx", "docker"],
+  "docker_containers": ["database", "redis"],
   "allowed_uptime_days": 120,
   "reporting_interval_seconds": 60
 }

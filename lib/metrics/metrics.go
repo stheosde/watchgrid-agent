@@ -54,6 +54,22 @@ func Collect() (*MetricSnapshot, error) {
 		}
 	}
 
+	var dockerStatus DockerStatus
+	detectedContainers := ports.RunningDockerContainers()
+	if len(cfg.DockerContainers) > 0 {
+		stoppedContainers := ports.CheckStoppedDockerContainers(cfg.DockerContainers)
+		dockerStatus = DockerStatus{
+			Error:    len(stoppedContainers) > 0,
+			Affected: stoppedContainers,
+			Detected: detectedContainers,
+		}
+	} else {
+		dockerStatus = DockerStatus{
+			Error:    false,
+			Detected: detectedContainers,
+		}
+	}
+
 	snapshot := &MetricSnapshot{
 		Agent: *agent.Info(),
 		Usage: Usages{
@@ -61,9 +77,10 @@ func Collect() (*MetricSnapshot, error) {
 			MemoryPercent: MemoryPercent(),
 			DiskPercent:   DiskPercent(),
 		},
-		Ports:     portStatus,
-		Services:  serviceStatus,
-		Timestamp: time.Now().Format("2006-01-02 15:04:05 -0700"),
+		Ports:            portStatus,
+		Services:         serviceStatus,
+		DockerContainers: dockerStatus,
+		Timestamp:        time.Now().Format("2006-01-02 15:04:05 -0700"),
 	}
 	return snapshot, nil
 }
@@ -88,6 +105,14 @@ func Print(metric *MetricSnapshot) {
 			parts = append(parts, fmt.Sprintf("services:error[affected:%v]", metric.Services.Affected))
 		} else {
 			parts = append(parts, "services:ok")
+		}
+	}
+
+	if len(cfg.DockerContainers) > 0 {
+		if metric.DockerContainers.Error {
+			parts = append(parts, fmt.Sprintf("docker_containers:error[affected:%v]", metric.DockerContainers.Affected))
+		} else {
+			parts = append(parts, "docker_containers:ok")
 		}
 	}
 
